@@ -290,7 +290,8 @@ function initTypewriterEffect() {
 function initLightbox() {
     const lightbox = document.getElementById('lightbox');
     const lightboxImage = document.getElementById('lightbox-image');
-    const lightboxCaption = document.querySelector('.lightbox-caption');
+    const lightboxTitle = document.getElementById('lightbox-title');
+    const lightboxDescription = document.getElementById('lightbox-description');
     const closeBtn = document.querySelector('.lightbox-close');
     const prevBtn = document.querySelector('.lightbox-prev');
     const nextBtn = document.querySelector('.lightbox-next');
@@ -298,50 +299,83 @@ function initLightbox() {
     let currentImages = [];
     let currentIndex = 0;
     
+    function updateImageList() {
+        // Get all visible gallery images (respects current filter)
+        currentImages = Array.from(document.querySelectorAll('.gallery-image'))
+            .filter(img => {
+                const galleryItem = img.closest('.gallery-item');
+                return galleryItem && galleryItem.style.display !== 'none';
+            });
+    }
+    
     // Add click listeners to all gallery images
-    const galleryImages = document.querySelectorAll('.gallery-image');
-    galleryImages.forEach((img, index) => {
-        img.addEventListener('click', function() {
-            const category = this.getAttribute('data-category');
-            
-            // Get all images from the same category
-            currentImages = Array.from(document.querySelectorAll(`.gallery-image[data-category="${category}"]`));
-            currentIndex = currentImages.indexOf(this);
-            
-            openLightbox();
+    function addImageListeners() {
+        const galleryImages = document.querySelectorAll('.gallery-image');
+        galleryImages.forEach(img => {
+            img.addEventListener('click', function() {
+                updateImageList();
+                currentIndex = currentImages.indexOf(this);
+                if (currentIndex !== -1) {
+                    openLightbox();
+                }
+            });
         });
-    });
+    }
+    
+    addImageListeners();
     
     function openLightbox() {
         if (currentImages.length > 0) {
-            showImage(currentIndex);
-            lightbox.classList.add('active');
+            lightbox.classList.add('show');
+            setTimeout(() => {
+                showImage(currentIndex);
+                lightbox.classList.add('active');
+            }, 10);
             document.body.style.overflow = 'hidden';
         }
     }
     
     function closeLightbox() {
         lightbox.classList.remove('active');
-        document.body.style.overflow = '';
+        setTimeout(() => {
+            lightbox.classList.remove('show');
+            document.body.style.overflow = '';
+        }, 300);
     }
     
     function showImage(index) {
         if (currentImages[index]) {
             const img = currentImages[index];
+            const galleryItem = img.closest('.gallery-item');
+            const galleryInfo = galleryItem ? galleryItem.querySelector('.gallery-info') : null;
+            
             lightboxImage.src = img.src;
             lightboxImage.alt = img.alt;
-            lightboxCaption.textContent = img.getAttribute('data-caption') || img.alt;
+            
+            if (galleryInfo) {
+                const title = galleryInfo.querySelector('h4');
+                const description = galleryInfo.querySelector('p');
+                lightboxTitle.textContent = title ? title.textContent : '';
+                lightboxDescription.textContent = description ? description.textContent : '';
+            } else {
+                lightboxTitle.textContent = img.alt || 'Image';
+                lightboxDescription.textContent = img.getAttribute('data-caption') || '';
+            }
         }
     }
     
     function nextImage() {
-        currentIndex = (currentIndex + 1) % currentImages.length;
-        showImage(currentIndex);
+        if (currentImages.length > 1) {
+            currentIndex = (currentIndex + 1) % currentImages.length;
+            showImage(currentIndex);
+        }
     }
     
     function prevImage() {
-        currentIndex = (currentIndex - 1 + currentImages.length) % currentImages.length;
-        showImage(currentIndex);
+        if (currentImages.length > 1) {
+            currentIndex = (currentIndex - 1 + currentImages.length) % currentImages.length;
+            showImage(currentIndex);
+        }
     }
     
     // Event listeners
@@ -371,6 +405,14 @@ function initLightbox() {
                     break;
             }
         }
+    });
+    
+    // Update image list when filters change
+    const filterButtons = document.querySelectorAll('.filter-btn');
+    filterButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            setTimeout(updateImageList, 100); // Small delay to ensure filter has been applied
+        });
     });
 }
 
