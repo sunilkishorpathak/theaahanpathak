@@ -161,6 +161,11 @@ function initHoverEffects() {
 
 function initUploadZone() {
     const uploadZone = document.querySelector('.upload-zone');
+    if (!uploadZone) {
+        console.log('Upload zone not found, skipping upload zone initialization');
+        return;
+    }
+    
     const uploadButtons = document.querySelectorAll('.upload-btn');
     
     uploadZone.addEventListener('dragover', (e) => {
@@ -272,6 +277,11 @@ function initParallaxEffect() {
 
 function initTypewriterEffect() {
     const heroTitle = document.querySelector('.hero-title');
+    if (!heroTitle) {
+        console.log('Hero title not found, skipping typewriter effect');
+        return;
+    }
+    
     const titleText = heroTitle.textContent;
     heroTitle.textContent = '';
     
@@ -288,6 +298,7 @@ function initTypewriterEffect() {
 }
 
 function initLightbox() {
+    console.log('Initializing lightbox...');
     const lightbox = document.getElementById('lightbox');
     const lightboxImage = document.getElementById('lightbox-image');
     const lightboxTitle = document.getElementById('lightbox-title');
@@ -295,6 +306,23 @@ function initLightbox() {
     const closeBtn = document.querySelector('.lightbox-close');
     const prevBtn = document.querySelector('.lightbox-prev');
     const nextBtn = document.querySelector('.lightbox-next');
+    
+    // Check if all elements exist
+    if (!lightbox || !lightboxImage || !lightboxTitle || !lightboxDescription || !closeBtn || !prevBtn || !nextBtn) {
+        console.warn('Lightbox elements not found, skipping initialization');
+        console.log('Elements found:', {
+            lightbox: !!lightbox,
+            lightboxImage: !!lightboxImage, 
+            lightboxTitle: !!lightboxTitle,
+            lightboxDescription: !!lightboxDescription,
+            closeBtn: !!closeBtn,
+            prevBtn: !!prevBtn,
+            nextBtn: !!nextBtn
+        });
+        return;
+    }
+    
+    console.log('All lightbox elements found, setting up event listeners...');
     
     let currentImages = [];
     let currentIndex = 0;
@@ -304,19 +332,30 @@ function initLightbox() {
         currentImages = Array.from(document.querySelectorAll('.gallery-image'))
             .filter(img => {
                 const galleryItem = img.closest('.gallery-item');
-                return galleryItem && galleryItem.style.display !== 'none';
+                // Check if gallery item exists and is visible
+                if (!galleryItem) return true; // If no parent gallery item, include it
+                const styles = window.getComputedStyle(galleryItem);
+                return styles.display !== 'none' && galleryItem.style.display !== 'none';
             });
+        console.log('Updated image list:', currentImages.length, 'images');
     }
     
     // Add click listeners to all gallery images
     function addImageListeners() {
         const galleryImages = document.querySelectorAll('.gallery-image');
-        galleryImages.forEach(img => {
-            img.addEventListener('click', function() {
+        console.log('Found', galleryImages.length, 'gallery images');
+        galleryImages.forEach((img, index) => {
+            img.style.cursor = 'pointer';
+            img.addEventListener('click', function(e) {
+                e.preventDefault();
+                console.log('Image clicked:', this.src);
                 updateImageList();
                 currentIndex = currentImages.indexOf(this);
+                console.log('Current index:', currentIndex, 'Total images:', currentImages.length);
                 if (currentIndex !== -1) {
                     openLightbox();
+                } else {
+                    console.warn('Image not found in current list');
                 }
             });
         });
@@ -325,13 +364,17 @@ function initLightbox() {
     addImageListeners();
     
     function openLightbox() {
+        console.log('Opening lightbox, current images:', currentImages.length);
         if (currentImages.length > 0) {
             lightbox.classList.add('show');
             setTimeout(() => {
                 showImage(currentIndex);
                 lightbox.classList.add('active');
+                console.log('Lightbox opened and active');
             }, 10);
             document.body.style.overflow = 'hidden';
+        } else {
+            console.warn('No images to display in lightbox');
         }
     }
     
